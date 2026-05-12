@@ -19,7 +19,18 @@ script = ExtResource("3_plr")
 offset_left = 21.0
 offset_top = 14.0
 offset_right = 312.0
-offset_bottom = 104.0
-text = "L-Click: Place Core (Range 150)
-R-Click: Place Transmitter (Range 200)
-Green = Powered | Red = Unpowered"
+offset_bottom = 140.0
+text = "L-Click: Place Core
+Shift + L-Click: Place Miner
+R-Click: Place Transmitter
+'I' Key: Place Asteroid
+Green/Cyan = Powered | Red = Unpowered"
+
+[node name="IronLabel" type="Label" parent="UI"]
+offset_left = 21.0
+offset_top = 150.0
+offset_right = 150.0
+offset_bottom = 173.0
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 24
+text = "Iron: 0"

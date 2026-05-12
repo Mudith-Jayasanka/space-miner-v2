@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://core_building_uid"]
+[gd_scene load_steps=3 format=3 uid="uid://b6t1nvnykq858"]
 
 [ext_resource type="Script" path="res://components/PowerSource.gd" id="1_ps"]
 [ext_resource type="Texture2D" uid="uid://c0pl7vy08wedu" path="res://icon.svg" id="2_icon"]
@@ -11,13 +11,3 @@ texture = ExtResource("2_icon")
 
 [node name="PowerSource" type="Node2D" parent="."]
 script = ExtResource("1_ps")
-power_output = 100.0
-transmission_range = 150.0
-
-[node name="Label" type="Label" parent="."]
-offset_left = -30.0
-offset_top = -50.0
-offset_right = 30.0
-offset_bottom = -27.0
-text = "CORE"
-horizontal_alignment = 1
