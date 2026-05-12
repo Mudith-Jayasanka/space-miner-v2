@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://transmitter_building_uid"]
+[gd_scene load_steps=5 format=3 uid="uid://transmitter_building_uid"]
 
 [ext_resource type="Script" path="res://buildings/power_transmitter/power_transmitter.gd" id="1_pt"]
 [ext_resource type="Script" path="res://components/PowerReceiver.gd" id="2_pr"]
 [ext_resource type="Texture2D" uid="uid://c0pl7vy08wedu" path="res://icon.svg" id="3_icon"]
+[ext_resource type="Script" path="res://components/RangeVisualizer.gd" id="4_rv"]
 
 [node name="PowerTransmitter" type="Node2D"]
 script = ExtResource("1_pt")
@@ -25,3 +26,8 @@ offset_bottom = -17.0
 theme_override_font_sizes/font_size = 12
 text = "TRANSMITTER"
 horizontal_alignment = 1
+
+[node name="RangeVisualizer" type="Node2D" parent="."]
+script = ExtResource("4_rv")
+radius = 200.0
+color = Color(0, 1, 1, 0.1)

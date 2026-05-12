@@ -84,7 +84,33 @@ func update_grid() -> void:
 					receiver.efficiency = 1.0 # Simple 1.0 for M1
 
 	GameEvents.grid_updated.emit()
-	GameEvents.surge_visual_requested.emit(connections)
+	GameEvents.surge_visual_requested.emit(connections, false)
+
+func get_potential_source(pos: Vector2) -> Node2D:
+	# Find the nearest powered building that can transmit to this position
+	var nearest_source = null
+	var min_dist = INF
+	
+	for b in buildings:
+		var receiver = _get_power_receiver(b)
+		var source = _get_power_source(b)
+		
+		# Building must be powered to be a source
+		if (receiver and receiver.is_powered) or source:
+			var range = _get_transmission_range(b)
+			var dist = b.global_position.distance_to(pos)
+			
+			if dist <= range and dist < min_dist:
+				min_dist = dist
+				nearest_source = b
+				
+	return nearest_source
+
+func _get_power_source(node: Node2D) -> PowerSource:
+	for child in node.get_children():
+		if child is PowerSource:
+			return child
+	return null
 
 func _get_power_receiver(node: Node2D) -> PowerReceiver:
 	for child in node.get_children():

@@ -13,4 +13,4 @@ signal grid_updated()
 signal iron_collected(amount: float)
 
 # Visual/VFX Events
-signal surge_visual_requested(path: Array)
+signal surge_visual_requested(path: Array, is_preview: bool)

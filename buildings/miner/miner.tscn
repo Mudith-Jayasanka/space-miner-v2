@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://miner_building_uid"]
+[gd_scene load_steps=6 format=3 uid="uid://miner_building_uid"]
 
 [ext_resource type="Script" path="res://buildings/miner/miner.gd" id="1_m"]
 [ext_resource type="Script" path="res://components/PowerReceiver.gd" id="2_pr"]
 [ext_resource type="Script" path="res://components/ResourceExtractor.gd" id="3_re"]
 [ext_resource type="Texture2D" uid="uid://c0pl7vy08wedu" path="res://icon.svg" id="4_icon"]
+[ext_resource type="Script" path="res://components/RangeVisualizer.gd" id="5_rv"]
 
 [node name="Miner" type="Node2D"]
 script = ExtResource("1_m")
@@ -31,3 +32,8 @@ offset_bottom = -22.0
 theme_override_font_sizes/font_size = 12
 text = "MINER"
 horizontal_alignment = 1
+
+[node name="MiningRange" type="Node2D" parent="."]
+script = ExtResource("5_rv")
+radius = 120.0
+color = Color(1, 0, 0, 0.1)
