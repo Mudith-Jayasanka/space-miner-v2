@@ -34,7 +34,6 @@ func _create_ghost(type: String) -> void:
 	if scene:
 		ghost_building = scene.instantiate()
 		ghost_building.modulate.a = 0.5
-		# Disable scripts on ghost if they interfere, or use a specific ghost mode
 		ghost_building.set_process(false)
 		ghost_building.set_physics_process(false)
 		if ghost_building.has_node("Label"):
@@ -50,19 +49,46 @@ func _process(_delta: float) -> void:
 		_update_ghost_visuals()
 
 func _update_ghost_visuals() -> void:
+	var can_place = _check_placement_valid(ghost_building)
+	
+	# Visual feedback for placement validity
+	if can_place:
+		ghost_building.modulate = Color(1, 1, 1, 0.5)
+	else:
+		ghost_building.modulate = Color(1, 0, 0, 0.5) # Red tint if blocked
+	
 	var potential_source = $GridManager.get_potential_source(ghost_building.global_position)
 	if potential_source:
 		GameEvents.surge_visual_requested.emit([[ghost_building.global_position, potential_source.global_position]], true)
 	else:
-		# If no potential source, still emit empty to clear preview lines
-		# Note: We need a way to clear ONLY preview lines or handle this in renderer
-		pass
+		GameEvents.surge_visual_requested.emit([], true)
+
+func _check_placement_valid(ghost: Node2D) -> bool:
+	if not ghost.has_node("CollisionShape2D"):
+		return true
+		
+	var space_state = get_world_2d().direct_space_state
+	var shape_query = PhysicsShapeQueryParameters2D.new()
+	
+	var shape_node = ghost.get_node("CollisionShape2D")
+	shape_query.shape = shape_node.shape
+	shape_query.transform = ghost.global_transform
+	shape_query.collide_with_areas = true
+	shape_query.collide_with_bodies = true
+	
+	# Exclude the ghost itself if it has a RID
+	if ghost is CollisionObject2D:
+		shape_query.exclude = [ghost.get_rid()]
+	
+	var results = space_state.intersect_shape(shape_query)
+	return results.size() == 0
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if selected_building_type != "":
-				_place_selected_building(event.position)
+				if _check_placement_valid(ghost_building):
+					_place_selected_building(event.position)
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			_clear_selection()
 	
@@ -75,7 +101,7 @@ func _clear_selection() -> void:
 	if ghost_building:
 		ghost_building.queue_free()
 		ghost_building = null
-	GameEvents.surge_visual_requested.emit([], true) # Clear preview lines
+	GameEvents.surge_visual_requested.emit([], true)
 
 func _place_selected_building(pos: Vector2) -> void:
 	var scene: PackedScene = null
@@ -86,8 +112,6 @@ func _place_selected_building(pos: Vector2) -> void:
 	
 	if scene:
 		_place_building(scene, pos)
-		# Keep selected or clear? Typically keep for batch placing
-		# but for core we might want to clear.
 		if selected_building_type == "core":
 			_clear_selection()
 
@@ -99,5 +123,9 @@ func _place_building(scene: PackedScene, pos: Vector2) -> void:
 
 func _place_entity(scene: PackedScene, pos: Vector2) -> void:
 	var e = scene.instantiate()
+	# Basic check for asteroid placement too
 	e.global_position = pos
-	add_child(e)
+	if _check_placement_valid(e):
+		add_child(e)
+	else:
+		e.queue_free()

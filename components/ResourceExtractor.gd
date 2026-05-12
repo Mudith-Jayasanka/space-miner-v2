@@ -2,7 +2,7 @@ extends Node2D
 class_name ResourceExtractor
 
 @export var mining_speed: float = 5.0 # Iron per second
-@export var mining_range: float = 100.0
+@export var mining_range: float = 120.0
 
 var target_asteroid: Asteroid = null
 var is_active: bool = false
@@ -28,8 +28,16 @@ func _find_target() -> void:
 	
 	for ast in asteroids:
 		if ast is Asteroid:
+			# Get the distance between centers
 			var dist = global_position.distance_to(ast.global_position)
-			if dist <= mining_range and dist < closest_dist:
+			
+			# Check if the circles intersect: 
+			# Distance between centers <= (Miner Range + Asteroid Radius)
+			var asteroid_radius = 64.0 # Default radius from tscn
+			# Adjust for asteroid scale
+			asteroid_radius *= ast.scale.x
+			
+			if dist <= (mining_range + asteroid_radius) and dist < closest_dist:
 				closest_dist = dist
 				closest_ast = ast
 				

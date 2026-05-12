@@ -6,7 +6,7 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_7j4u7"]
 radius = 64.0
 
-[node name="Asteroid" type="StaticBody2D" groups=["asteroids"]]
+[node name="Asteroid" type="Area2D" groups=["asteroids"]]
 script = ExtResource("1_a")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

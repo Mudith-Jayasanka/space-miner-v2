@@ -42,10 +42,11 @@
 - **Behavior:** Static locations, vary in size.
 - **Capacity:** Larger asteroids contain more Iron.
 
-### Power Sources
-- **Core:** The primary, high-output power source.
-- **Solar Panels / Generators:** Additional buildings that can be placed to increase the grid's total capacity.
-- **Connectivity:** Sources must be connected to the grid (directly or via Transmission Nodes) to contribute to the global power pool.
+## Power Management
+
+### Transmission Constraints
+- **Transmitters Only:** Power can only propagate through **Power Sources** (Cores) or **Power Transmitters**.
+- **End-Point Consumers:** Buildings that consume power for work (like **Miners**) cannot pass power to other buildings. They act as "leaf nodes" in the power graph.
 
 ### Grid Fragmentation & Sub-Grids
 The network is not a single entity but a collection of **Grids**.

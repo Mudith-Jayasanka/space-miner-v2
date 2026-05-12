@@ -1,6 +1,7 @@
 extends Node2D
 
 var grid_lines: Node2D
+var unpowered_lines: Node2D
 var preview_lines: Node2D
 
 func _ready() -> void:
@@ -8,11 +9,27 @@ func _ready() -> void:
 	grid_lines.name = "GridLines"
 	add_child(grid_lines)
 	
+	unpowered_lines = Node2D.new()
+	unpowered_lines.name = "UnpoweredLines"
+	add_child(unpowered_lines)
+	
 	preview_lines = Node2D.new()
 	preview_lines.name = "PreviewLines"
 	add_child(preview_lines)
 	
 	GameEvents.surge_visual_requested.connect(_on_surge_visual_requested)
+	GameEvents.unpowered_grid_visual_requested.connect(_on_unpowered_grid_visual_requested)
+
+func _on_unpowered_grid_visual_requested(connections: Array) -> void:
+	for child in unpowered_lines.get_children():
+		child.queue_free()
+	
+	for pair in connections:
+		var line = Line2D.new()
+		line.points = PackedVector2Array(pair)
+		line.width = 1.0 # Thinner for unpowered
+		line.default_color = Color(0.5, 0.5, 0.5, 0.3) # Grey
+		unpowered_lines.add_child(line)
 
 func _on_surge_visual_requested(connections: Array, is_preview: bool) -> void:
 	var container = preview_lines if is_preview else grid_lines

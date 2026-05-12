@@ -1,17 +1,23 @@
-[gd_scene load_steps=5 format=3 uid="uid://transmitter_building_uid"]
+[gd_scene load_steps=6 format=3 uid="uid://transmitter_building_uid"]
 
 [ext_resource type="Script" path="res://buildings/power_transmitter/power_transmitter.gd" id="1_pt"]
 [ext_resource type="Script" path="res://components/PowerReceiver.gd" id="2_pr"]
 [ext_resource type="Texture2D" uid="uid://c0pl7vy08wedu" path="res://icon.svg" id="3_icon"]
 [ext_resource type="Script" path="res://components/RangeVisualizer.gd" id="4_rv"]
 
-[node name="PowerTransmitter" type="Node2D"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_transmitter"]
+radius = 20.0
+
+[node name="PowerTransmitter" type="Area2D" groups=["buildings"]]
 script = ExtResource("1_pt")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(1, 0, 0, 1)
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_transmitter")
 
 [node name="PowerReceiver" type="Node2D" parent="."]
 script = ExtResource("2_pr")

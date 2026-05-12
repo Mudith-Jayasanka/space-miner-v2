@@ -14,3 +14,4 @@ signal iron_collected(amount: float)
 
 # Visual/VFX Events
 signal surge_visual_requested(path: Array, is_preview: bool)
+signal unpowered_grid_visual_requested(connections: Array)

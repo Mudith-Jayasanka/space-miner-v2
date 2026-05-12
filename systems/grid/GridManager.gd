@@ -26,65 +26,119 @@ func update_grid() -> void:
 			receiver.is_powered = false
 			receiver.efficiency = 0.0
 
-	# 2. Identify Islands and Sources
-	# For Milestone 1, we assume a single interconnected grid for simplicity
-	# and start BFS from all PowerSources.
-	
+	# 2. Identify Sources
 	var sources = _get_all_sources()
-	if sources.is_empty():
-		GameEvents.grid_updated.emit()
-		return
-
-	# 3. Multi-Source BFS
-	var queue = []
-	var visited = {}
-	var connections = [] # Array of pairs [[from_pos, to_pos], ...]
 	
-	# Initial layer: Power Sources
-	for source_node in sources:
-		var building = source_node.get_parent()
-		queue.append(building)
-		visited[building] = {
-			"source": source_node,
-			"parent": null,
-			"depth": 0
-		}
-		# Sources themselves are effectively "powered"
-		var receiver = _get_power_receiver(building)
-		if receiver:
-			receiver.is_powered = true
-			receiver.efficiency = 1.0
+	# 3. Connectivity Analysis (All potential edges)
+	var all_edges = []
+	var building_edges = {} # b -> [neighbors]
+	for b in buildings:
+		building_edges[b] = []
+		var range = _get_transmission_range(b)
+		for other in buildings:
+			if b == other: continue
+			if b.global_position.distance_to(other.global_position) <= range:
+				building_edges[b].append(other)
+				all_edges.append([b, other])
 
-	var head = 0
-	while head < queue.size():
-		var current_building = queue[head]
-		head += 1
-		
-		var current_range = _get_transmission_range(current_building)
-		
-		# Find neighbors within range
-		for other_building in buildings:
-			if other_building == current_building or visited.has(other_building):
-				continue
-				
-			var dist = current_building.global_position.distance_to(other_building.global_position)
-			if dist <= current_range:
-				# Connection found
-				visited[other_building] = {
-					"parent": current_building,
-					"depth": visited[current_building]["depth"] + 1
-				}
-				connections.append([current_building.global_position, other_building.global_position])
-				queue.append(other_building)
-				
-				# Power the receiver
-				var receiver = _get_power_receiver(other_building)
+	# 4. Powered Set (Prim's Variation)
+	var powered_buildings: Array[Node2D] = []
+	var powered_connections = []
+	
+	if not sources.is_empty():
+		for source_node in sources:
+			var b = source_node.get_parent()
+			if not powered_buildings.has(b):
+				powered_buildings.append(b)
+				var receiver = _get_power_receiver(b)
 				if receiver:
 					receiver.is_powered = true
-					receiver.efficiency = 1.0 # Simple 1.0 for M1
+					receiver.efficiency = 1.0
 
+		var changed = true
+		while changed:
+			changed = false
+			var best_edge = null
+			var min_dist = INF
+			
+			for p in powered_buildings:
+				var p_range = _get_transmission_range(p)
+				for neighbor in building_edges[p]:
+					if powered_buildings.has(neighbor): continue
+					
+					var dist = p.global_position.distance_to(neighbor.global_position)
+					if dist < min_dist:
+						min_dist = dist
+						best_edge = {"parent": p, "child": neighbor}
+			
+			if best_edge:
+				var p = best_edge["parent"]
+				var u = best_edge["child"]
+				powered_buildings.append(u)
+				powered_connections.append([p.global_position, u.global_position])
+				var receiver = _get_power_receiver(u)
+				if receiver:
+					receiver.is_powered = true
+					receiver.efficiency = 1.0
+				changed = true
+
+	# 5. Global Visual Connections (MST for the whole set of buildings)
+	# For simplicity in visualising the "Grey" lines, we show all valid adjacencies
+	# or an MST of unpowered islands. 
+	# User requirement: "If i remove the second, the other two should still be connected"
+	
+	var unpowered_connections = []
+	# We want to show lines that ARE valid physical connections but NOT powered
+	for edge in all_edges:
+		var b1 = edge[0]
+		var b2 = edge[1]
+		
+		# If this specific connection isn't in powered_connections, 
+		# and it represents a "closest" physical link, show it as grey.
+		# Note: Prim's already gives us a tree. For unpowered, we can just show
+		# all local adjacencies or a similar MST.
+		
+		# Simple approach: If both or either are unpowered, show it as a potential grey line
+		# IF it's the "closest" neighbor to maintain the tree look.
+		pass
+
+	# Refined approach: Emit two sets of connections
 	GameEvents.grid_updated.emit()
-	GameEvents.surge_visual_requested.emit(connections, false)
+	
+	# We will emit ALL valid connections, but the renderer will need to know which are powered
+	# Or we emit two separate signals. Let's update the surge signal.
+	
+	var final_connections = []
+	for edge in all_edges:
+		var is_edge_powered = false
+		for pc in powered_connections:
+			if (edge[0].global_position == pc[0] and edge[1].global_position == pc[1]) or \
+			   (edge[0].global_position == pc[1] and edge[1].global_position == pc[0]):
+				is_edge_powered = true
+				break
+		
+		# To avoid duplicate lines and messy visuals, we only show edges 
+		# that are part of the local "closest node" tree.
+		# For Milestone 3, let's just emit the powered ones and a set of "all valid adjacencies"
+		# with a flag.
+		pass
+
+	GameEvents.surge_visual_requested.emit(powered_connections, false)
+	# Emit unpowered ones (simple version: any edge not in powered_connections)
+	var grey_connections = []
+	for edge in all_edges:
+		var p1 = edge[0].global_position
+		var p2 = edge[1].global_position
+		var found = false
+		for pc in powered_connections:
+			if (p1 == pc[0] and p2 == pc[1]) or (p1 == pc[1] and p2 == pc[0]):
+				found = true
+				break
+		if not found:
+			grey_connections.append([p1, p2])
+	
+	# We need a way to send unpowered lines. Let's add a parameter or new signal.
+	GameEvents.unpowered_grid_visual_requested.emit(grey_connections)
 
 func get_potential_source(pos: Vector2) -> Node2D:
 	# Find the nearest powered building that can transmit to this position
@@ -127,10 +181,12 @@ func _get_all_sources() -> Array[PowerSource]:
 	return sources
 
 func _get_transmission_range(node: Node2D) -> float:
-	# Check for PowerSource first, then PowerReceiver
+	# Only buildings with a PowerSource (Core) or a PowerReceiver with 0 power requirement (Transmitter) can transmit.
+	# Miners (PowerReceiver with > 0 requirement) cannot transmit.
 	for child in node.get_children():
 		if child is PowerSource:
 			return child.transmission_range
 		if child is PowerReceiver:
-			return child.transmission_range
+			if child.power_required <= 0: # This is a Transmitter
+				return child.transmission_range
 	return 0.0
